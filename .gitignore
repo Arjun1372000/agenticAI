@@ -4,3 +4,4 @@ __pycache__/
 .env
 .vscode/
 .ipynb_checkpoints/
+bearing-dataset/

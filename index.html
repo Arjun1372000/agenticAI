@@ -3,81 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bearing Diagnostics Edge Dashboard</title>
+    <title>Deterministic Edge AI | Bearing Diagnostics</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Load Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
-        <!-- Header Section -->
+        <!-- Top Navigation -->
         <header class="top-bar">
             <div class="title-section">
                 <h1>Deterministic MCP AI Agent</h1>
-                <p>Ball Bearing Vibration Diagnostics</p>
+                <p>Edge-Optimized Vibration Diagnostics & Prognostics</p>
             </div>
             <div class="telemetry-bar">
                 <span class="badge status-active">● Edge Connected</span>
-                <span class="badge metric">2000 RPM</span>
-                <span class="badge metric">Load: 6000 lbs</span>
+                <span class="badge metric" id="live-rpm">2000 RPM</span>
+                <span class="badge metric" id="live-load">6000 lbs Load</span>
             </div>
         </header>
 
-        <!-- Main Dashboard Content -->
+        <!-- Main Layout -->
         <main class="dashboard-grid">
             
-            <!-- Left Panel: Data Visualizations -->
+            <!-- Left Panel: Visualizations & Asset Health -->
             <section class="panel visualization-panel">
-                <h2>Real-Time Vibration Monitoring</h2>
-                
-                <div class="chart-wrapper">
-                    <h3>Time-Domain Signal (20 kHz Snapshot)</h3>
-                    <!-- Replace the div below with your Matplotlib/Seaborn base64 image or JS chart -->
-                    <div class="chart-placeholder">
-                        [Inject Python Time-Domain Graph Here]
+                <h2>Asset Health Matrix</h2>
+                <!-- Shows WHICH bearing -->
+                <div class="bearing-matrix">
+                    <div class="bearing-card fault" id="b1-status">
+                        <h3>Bearing 1</h3>
+                        <p>Critical Warning</p>
+                    </div>
+                    <div class="bearing-card healthy" id="b2-status">
+                        <h3>Bearing 2</h3>
+                        <p>Healthy</p>
+                    </div>
+                    <div class="bearing-card healthy" id="b3-status">
+                        <h3>Bearing 3</h3>
+                        <p>Healthy</p>
+                    </div>
+                    <div class="bearing-card healthy" id="b4-status">
+                        <h3>Bearing 4</h3>
+                        <p>Healthy</p>
                     </div>
                 </div>
 
+                <h2>Prognostic Degradation Curve</h2>
+                <!-- Shows WHEN it will fail -->
                 <div class="chart-wrapper">
-                    <h3>Frequency Spectrum (FFT Analysis)</h3>
-                    <!-- Replace the div below with your Matplotlib/Seaborn base64 image or JS chart -->
-                    <div class="chart-placeholder">
-                        [Inject Python FFT/Wavelet Graph Here]
+                    <div class="chart-container">
+                        <canvas id="degradationChart"></canvas>
                     </div>
                 </div>
             </section>
 
-            <!-- Right Panel: Agent Outputs and Diagnostics -->
+            <!-- Right Panel: Diagnostics & MCP Logic -->
             <section class="panel diagnostics-panel">
-                <h2>Diagnostic Output</h2>
+                <h2>Live Diagnostic Output</h2>
                 
-                <!-- Health Status Card -->
+                <!-- Shows WHAT the fault is -->
                 <div class="health-card status-faulty">
-                    <h3>Bearing Health: <span class="alert-text">FAULT DETECTED</span></h3>
-                    <p><strong>Classification:</strong> Inner Race Defect (Early Stage)</p>
+                    <h3>Current State: <span class="alert-text">DEGRADED</span></h3>
+                    <p><strong>Primary Asset:</strong> Bearing 1</p>
+                    <p><strong>Fault Classification:</strong> Outer Race Defect (BPFO)</p>
                 </div>
 
-                <!-- MCP Deterministic Reasoning -->
+                <!-- Shows WHEN it will fail (RUL) -->
+                <div class="rul-card">
+                    <h3>Remaining Useful Life (RUL)</h3>
+                    <h2 class="alert-text" id="rul-countdown">14 Hours, 22 Mins</h2>
+                    <p><strong>Recommended Action:</strong> Schedule immediate shutdown.</p>
+                </div>
+
+                <!-- Shows WHY the agent made this decision -->
                 <div class="mcp-reasoning">
                     <h3>Agent Reasoning Log (ISO Standard)</h3>
-                    <ul class="reasoning-list">
-                        <li>Peak frequency identified at 162 Hz (BPFI match).</li>
-                        <li>Signal crest factor is 22% above healthy baseline.</li>
-                        <li>XGBoost confidence score: 98.4%.</li>
-                        <li><strong>Conclusion:</strong> Deterministic match for Inner Race anomaly. Immediate maintenance not required; schedule inspection within 48 hours.</li>
+                    <ul class="reasoning-list" id="reasoning-log">
+                        <li>Evaluating incoming JSON payload...</li>
                     </ul>
                 </div>
-
-                <!-- Data Snapshot Specs -->
+                
                 <div class="system-specs">
-                    <h3>Data Feed Specifications</h3>
+                    <h3>Live Telemetry (Bearing 1)</h3>
                     <div class="spec-grid">
-                        <div class="spec-item"><span>Sampling Rate</span> 20 kHz</div>
-                        <div class="spec-item"><span>Snapshot Size</span> 20,480 points</div>
-                        <div class="spec-item"><span>Processing</span> Edge Node</div>
+                        <div class="spec-item"><span>Current RMS:</span> <span id="val-rms">0.00</span></div>
+                        <div class="spec-item"><span>Kurtosis:</span> <span id="val-kurtosis">0.00</span></div>
+                        <div class="spec-item"><span>Peak Frequency:</span> <span id="val-freq">0 Hz</span></div>
                     </div>
                 </div>
             </section>
-            
         </main>
     </div>
+
+    <!-- Client-Side Rendering Logic & Mock Data Stream -->
+    <script>
+        // 1. Initialize Chart.js
+        const ctx = document.getElementById('degradationChart').getContext('2d');
+        const degradationChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], 
+                datasets: [
+                    {
+                        label: 'Live RMS (Bearing 1)',
+                        data: [],
+                        borderColor: '#0056b3',
+                        backgroundColor: 'rgba(0, 86, 179, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3
+                    },
+                    {
+                        label: 'Critical Threshold',
+                        data: [],
+                        borderColor: '#d32f2f',
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 0.2 },
+                    x: { title: { display: true, text: 'Time (1-Sec Snapshots)' } }
+                },
+                animation: { duration: 400 } // Smooth data transitions
+            }
+        });
+
+        // 2. Mocking the Python Endpoint Stream
+        let timeStep = 0;
+        let baseRms = 0.08;
+        
+        function fetchMockData() {
+            // Simulate the degradation climbing over time
+            timeStep++;
+            baseRms += (Math.random() * 0.005); 
+            let mockRms = baseRms + (Math.random() * 0.01 - 0.005); // Add noise
+            
+            // This represents the JSON payload your Python script will eventually send
+            const mockPayload = {
+                timestamp: `T+${timeStep}s`,
+                live_features: {
+                    b1_rms: mockRms.toFixed(3),
+                    b1_kurtosis: (3 + (timeStep * 0.1)).toFixed(2),
+                    peak_freq: "980 Hz" // Simulated BPFO frequency match
+                },
+                diagnostics: {
+                    rul: "14 Hours, " + (22 - (timeStep % 22)) + " Mins",
+                    threshold: 0.15
+                },
+                reasoning: [
+                    `Sustained RMS growth detected (${mockRms.toFixed(3)}).`,
+                    `Dominant FFT peak localized at 980 Hz (Outer Race Geometry).`,
+                    `Current trajectory intersects 0.15 failure threshold in approx. 14 hours.`
+                ]
+            };
+
+            updateDashboard(mockPayload);
+        }
+
+        // 3. Update the UI with incoming data
+        function updateDashboard(data) {
+            // Update Text Elements
+            document.getElementById('val-rms').innerText = data.live_features.b1_rms;
+            document.getElementById('val-kurtosis').innerText = data.live_features.b1_kurtosis;
+            document.getElementById('val-freq').innerText = data.live_features.peak_freq;
+            document.getElementById('rul-countdown').innerText = data.diagnostics.rul;
+
+            // Update MCP Reasoning Log
+            const logElement = document.getElementById('reasoning-log');
+            logElement.innerHTML = '';
+            data.reasoning.forEach(reason => {
+                let li = document.createElement('li');
+                li.innerText = reason;
+                logElement.appendChild(li);
+            });
+
+            // Update Chart
+            degradationChart.data.labels.push(data.timestamp);
+            degradationChart.data.datasets[0].data.push(data.live_features.b1_rms);
+            degradationChart.data.datasets[1].data.push(data.diagnostics.threshold);
+            
+            if (degradationChart.data.labels.length > 20) {
+                degradationChart.data.labels.shift();
+                degradationChart.data.datasets[0].data.shift();
+                degradationChart.data.datasets[1].data.shift();
+            }
+            degradationChart.update();
+        }
+
+        // Run the fetch function every 2 seconds to simulate a live data stream
+        setInterval(fetchMockData, 2000);
+    </script>
 </body>
 </html>

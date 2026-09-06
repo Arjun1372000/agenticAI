@@ -1,0 +1,185 @@
+/* Core Variables & Reset */
+:root {
+    --bg-color: #f0f2f5;
+    --panel-bg: #ffffff;
+    --text-main: #333333;
+    --text-muted: #666666;
+    --accent-blue: #0056b3;
+    --alert-red: #d32f2f;
+    --ok-green: #2e7d32;
+    --border-radius: 8px;
+    --border-color: #e0e0e0;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    padding: 20px;
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Header Styling */
+.top-bar {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.title-section h1 {
+    font-size: 1.5rem;
+    color: var(--accent-blue);
+    margin-bottom: 5px;
+}
+
+.title-section p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.telemetry-bar {
+    display: flex;
+    gap: 10px;
+}
+
+.badge {
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: #e9ecef;
+}
+
+.status-active {
+    background: #e8f5e9;
+    color: var(--ok-green);
+}
+
+/* Grid Layout */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* 2/3 for charts, 1/3 for diagnostics */
+    gap: 20px;
+}
+
+.panel {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.panel h2 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Visualizations Panel */
+.chart-wrapper {
+    margin-bottom: 20px;
+}
+
+.chart-wrapper h3 {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 250px;
+    background: #f8f9fa;
+    border: 2px dashed #ced4da;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    font-weight: 500;
+}
+
+/* Diagnostics Panel */
+.health-card {
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+}
+
+.status-faulty {
+    background: #ffebee;
+    border-left: 6px solid var(--alert-red);
+}
+
+.alert-text {
+    color: var(--alert-red);
+}
+
+.mcp-reasoning {
+    background: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.mcp-reasoning h3 {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    color: var(--text-main);
+}
+
+.reasoning-list {
+    list-style-position: inside;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.reasoning-list li {
+    margin-bottom: 8px;
+}
+
+/* Specs Grid */
+.system-specs h3 {
+    font-size: 1rem;
+    margin-bottom: 15px;
+}
+
+.spec-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.spec-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.spec-item span {
+    font-weight: 600;
+    color: var(--text-muted);
+}

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bearing Diagnostics Edge Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header Section -->
+        <header class="top-bar">
+            <div class="title-section">
+                <h1>Deterministic MCP AI Agent</h1>
+                <p>Ball Bearing Vibration Diagnostics</p>
+            </div>
+            <div class="telemetry-bar">
+                <span class="badge status-active">● Edge Connected</span>
+                <span class="badge metric">2000 RPM</span>
+                <span class="badge metric">Load: 6000 lbs</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="dashboard-grid">
+            
+            <!-- Left Panel: Data Visualizations -->
+            <section class="panel visualization-panel">
+                <h2>Real-Time Vibration Monitoring</h2>
+                
+                <div class="chart-wrapper">
+                    <h3>Time-Domain Signal (20 kHz Snapshot)</h3>
+                    <!-- Replace the div below with your Matplotlib/Seaborn base64 image or JS chart -->
+                    <div class="chart-placeholder">
+                        [Inject Python Time-Domain Graph Here]
+                    </div>
+                </div>
+
+                <div class="chart-wrapper">
+                    <h3>Frequency Spectrum (FFT Analysis)</h3>
+                    <!-- Replace the div below with your Matplotlib/Seaborn base64 image or JS chart -->
+                    <div class="chart-placeholder">
+                        [Inject Python FFT/Wavelet Graph Here]
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Agent Outputs and Diagnostics -->
+            <section class="panel diagnostics-panel">
+                <h2>Diagnostic Output</h2>
+                
+                <!-- Health Status Card -->
+                <div class="health-card status-faulty">
+                    <h3>Bearing Health: <span class="alert-text">FAULT DETECTED</span></h3>
+                    <p><strong>Classification:</strong> Inner Race Defect (Early Stage)</p>
+                </div>
+
+                <!-- MCP Deterministic Reasoning -->
+                <div class="mcp-reasoning">
+                    <h3>Agent Reasoning Log (ISO Standard)</h3>
+                    <ul class="reasoning-list">
+                        <li>Peak frequency identified at 162 Hz (BPFI match).</li>
+                        <li>Signal crest factor is 22% above healthy baseline.</li>
+                        <li>XGBoost confidence score: 98.4%.</li>
+                        <li><strong>Conclusion:</strong> Deterministic match for Inner Race anomaly. Immediate maintenance not required; schedule inspection within 48 hours.</li>
+                    </ul>
+                </div>
+
+                <!-- Data Snapshot Specs -->
+                <div class="system-specs">
+                    <h3>Data Feed Specifications</h3>
+                    <div class="spec-grid">
+                        <div class="spec-item"><span>Sampling Rate</span> 20 kHz</div>
+                        <div class="spec-item"><span>Snapshot Size</span> 20,480 points</div>
+                        <div class="spec-item"><span>Processing</span> Edge Node</div>
+                    </div>
+                </div>
+            </section>
+            
+        </main>
+    </div>
+</body>
+</html>

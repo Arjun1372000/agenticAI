@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: predictive-maintenance
+Version: 0.1.0
+Summary: Predictive maintenance and bearing vibration diagnostics
+Requires-Python: >=3.12
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: scipy
+Requires-Dist: scikit-learn
+Requires-Dist: xgboost
+Requires-Dist: joblib
+Requires-Dist: fastapi
+Requires-Dist: uvicorn[standard]

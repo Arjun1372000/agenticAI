@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Bearing Health Monitor</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <header class="topbar">
+
+        <div>
+            <div class="eyebrow">PREDICTIVE MAINTENANCE</div>
+            <h1>Bearing Health Monitor</h1>
+            <p class="subtitle">
+                NASA IMS run-to-failure dataset · Test 2
+            </p>
+        </div>
+
+        <div class="connection">
+            <span class="connection-dot"></span>
+            <span id="connectionStatus">Connecting</span>
+        </div>
+
+    </header>
+
+
+    <main>
+
+        <section class="overview">
+
+            <div class="section-heading">
+                <div>
+                    <div class="section-label">ASSET OVERVIEW</div>
+                    <h2>Machine condition</h2>
+                </div>
+
+                <select id="bearingSelector">
+                    <option value="1">Bearing 1</option>
+                    <option value="2">Bearing 2</option>
+                    <option value="3">Bearing 3</option>
+                    <option value="4">Bearing 4</option>
+                </select>
+            </div>
+
+
+            <div class="asset-card">
+
+                <div class="asset-main">
+
+                    <div class="bearing-icon">
+                        <div class="bearing-ring"></div>
+                    </div>
+
+                    <div>
+                        <div class="asset-name" id="assetName">
+                            Bearing 1
+                        </div>
+
+                        <div class="asset-description">
+                            Test 2 · Vibration channel 1
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="asset-state">
+
+                    <span class="state-indicator"></span>
+
+                    <div>
+                        <div class="state-label">CURRENT STATE</div>
+                        <div class="state-value">
+                            Awaiting diagnostics
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="metrics-grid">
+
+            <div class="metric-card">
+
+                <div class="metric-header">
+                    <span>RMS</span>
+                    <span class="metric-symbol">RMS</span>
+                </div>
+
+                <div class="metric-value" id="rms">
+                    —
+                </div>
+
+                <div class="metric-description">
+                    Root mean square vibration
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-header">
+                    <span>Kurtosis</span>
+                    <span class="metric-symbol">K</span>
+                </div>
+
+                <div class="metric-value" id="kurtosis">
+                    —
+                </div>
+
+                <div class="metric-description">
+                    Signal impulsiveness
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-header">
+                    <span>Peak-to-Peak</span>
+                    <span class="metric-symbol">P-P</span>
+                </div>
+
+                <div class="metric-value" id="peakToPeak">
+                    —
+                </div>
+
+                <div class="metric-description">
+                    Maximum vibration amplitude
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-header">
+                    <span>Crest Factor</span>
+                    <span class="metric-symbol">CF</span>
+                </div>
+
+                <div class="metric-value" id="crestFactor">
+                    —
+                </div>
+
+                <div class="metric-description">
+                    Peak amplitude / RMS
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="charts-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="section-label">VIBRATION HISTORY</div>
+                    <h2>Feature trends</h2>
+                </div>
+
+                <div class="history-info">
+                    Last 100 observations
+                </div>
+
+            </div>
+
+
+            <div class="chart-grid">
+
+                <div class="chart-card">
+                    <div class="chart-title">RMS</div>
+                    <div class="chart-container">
+                        <canvas id="rmsChart"></canvas>
+                    </div>
+                </div>
+
+
+                <div class="chart-card">
+                    <div class="chart-title">Kurtosis</div>
+                    <div class="chart-container">
+                        <canvas id="kurtosisChart"></canvas>
+                    </div>
+                </div>
+
+
+                <div class="chart-card">
+                    <div class="chart-title">Peak-to-Peak</div>
+                    <div class="chart-container">
+                        <canvas id="peakChart"></canvas>
+                    </div>
+                </div>
+
+
+                <div class="chart-card">
+                    <div class="chart-title">Crest Factor</div>
+                    <div class="chart-container">
+                        <canvas id="crestChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="lower-grid">
+
+            <div class="info-card">
+
+                <div class="section-label">LATEST OBSERVATION</div>
+
+                <div class="info-row">
+                    <span>Timestamp</span>
+                    <strong id="timestamp">—</strong>
+                </div>
+
+                <div class="info-row">
+                    <span>Dataset</span>
+                    <strong>NASA IMS · Test 2</strong>
+                </div>
+
+                <div class="info-row">
+                    <span>Samples / recording</span>
+                    <strong>20,480</strong>
+                </div>
+
+                <div class="info-row">
+                    <span>Sampling frequency</span>
+                    <strong>20 kHz</strong>
+                </div>
+
+            </div>
+
+
+            <div class="info-card future-card">
+
+                <div class="section-label">DIAGNOSTICS</div>
+
+                <div class="future-title">
+                    Intelligence layer
+                </div>
+
+                <p>
+                    Health assessment, fault diagnosis, RUL estimation,
+                    and agent reasoning will appear here as the diagnostic
+                    pipeline is implemented.
+                </p>
+
+                <div class="pipeline">
+
+                    <span>Telemetry</span>
+                    <span>→</span>
+                    <span>Features</span>
+                    <span>→</span>
+                    <span>Diagnostics</span>
+                    <span>→</span>
+                    <span>Agent</span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+        <span>Predictive Maintenance Prototype</span>
+        <span>Real processed vibration data</span>
+    </footer>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

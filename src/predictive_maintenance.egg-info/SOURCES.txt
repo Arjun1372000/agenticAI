@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/predictive_maintenance/__init__.py
+src/predictive_maintenance/build_features.py
+src/predictive_maintenance/data.py
+src/predictive_maintenance/features.py
+src/predictive_maintenance/observations.py
+src/predictive_maintenance.egg-info/PKG-INFO
+src/predictive_maintenance.egg-info/SOURCES.txt
+src/predictive_maintenance.egg-info/dependency_links.txt
+src/predictive_maintenance.egg-info/requires.txt
+src/predictive_maintenance.egg-info/top_level.txt

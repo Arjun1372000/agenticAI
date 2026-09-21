@@ -8,3 +8,6 @@ bearing-dataset/
 data/processed/
 models/
 *.csv
+*.egg-info/
+build/
+dist/

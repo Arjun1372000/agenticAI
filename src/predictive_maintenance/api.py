@@ -3,6 +3,8 @@ from pathlib import Path
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 
+from predictive_maintenance.health import calculate_health_series
+
 
 app = FastAPI(
     title="Predictive Maintenance API",
@@ -27,6 +29,14 @@ def load_features() -> pd.DataFrame:
     )
 
 
+def validate_bearing_id(bearing_id: int) -> None:
+    if bearing_id not in (1, 2, 3, 4):
+        raise HTTPException(
+            status_code=400,
+            detail="bearing_id must be between 1 and 4",
+        )
+
+
 @app.get("/")
 def root():
     return {
@@ -37,37 +47,56 @@ def root():
 
 @app.get("/api/bearings/{bearing_id}/latest")
 def get_latest(bearing_id: int):
-    if bearing_id not in (1, 2, 3, 4):
-        raise HTTPException(
-            status_code=400,
-            detail="bearing_id must be 1, 2, 3, or 4",
-        )
+
+    validate_bearing_id(bearing_id)
 
     df = load_features()
 
-    observations = df[
-        [
-            "Timestamp",
-            f"B{bearing_id}_RMS",
-            f"B{bearing_id}_Kurtosis",
-            f"B{bearing_id}_Peak2Peak",
-            f"B{bearing_id}_CrestFactor",
-        ]
-    ]
+    prefix = f"B{bearing_id}"
 
-    latest = observations.iloc[-1]
+    latest = df.iloc[-1]
+
+    health = calculate_health_series(
+        df,
+        bearing_id=bearing_id,
+    ).iloc[-1]
 
     return {
         "bearing_id": bearing_id,
+
         "timestamp": latest["Timestamp"].isoformat(),
-        "rms": float(latest[f"B{bearing_id}_RMS"]),
-        "kurtosis": float(latest[f"B{bearing_id}_Kurtosis"]),
-        "peak_to_peak": float(
-            latest[f"B{bearing_id}_Peak2Peak"]
-        ),
-        "crest_factor": float(
-            latest[f"B{bearing_id}_CrestFactor"]
-        ),
+
+        "features": {
+            "rms": float(
+                latest[f"{prefix}_RMS"]
+            ),
+
+            "kurtosis": float(
+                latest[f"{prefix}_Kurtosis"]
+            ),
+
+            "peak_to_peak": float(
+                latest[f"{prefix}_Peak2Peak"]
+            ),
+
+            "crest_factor": float(
+                latest[f"{prefix}_CrestFactor"]
+            ),
+        },
+
+        "health": {
+            "score": float(
+                health["HealthScore"]
+            ),
+
+            "condition": str(
+                health["Condition"]
+            ),
+
+            "degradation_index": float(
+                health["DegradationIndex"]
+            ),
+        },
     }
 
 
@@ -76,11 +105,8 @@ def get_history(
     bearing_id: int,
     limit: int = 100,
 ):
-    if bearing_id not in (1, 2, 3, 4):
-        raise HTTPException(
-            status_code=400,
-            detail="bearing_id must be 1, 2, 3, or 4",
-        )
+
+    validate_bearing_id(bearing_id)
 
     if limit < 1 or limit > 984:
         raise HTTPException(
@@ -92,31 +118,51 @@ def get_history(
 
     prefix = f"B{bearing_id}"
 
-    columns = [
-        "Timestamp",
-        f"{prefix}_RMS",
-        f"{prefix}_Kurtosis",
-        f"{prefix}_Peak2Peak",
-        f"{prefix}_CrestFactor",
-    ]
+    health = calculate_health_series(
+        df,
+        bearing_id=bearing_id,
+    )
 
-    history = df[columns].tail(limit)
+    history = df.tail(limit).copy()
+    health = health.tail(limit)
 
     records = []
 
-    for _, row in history.iterrows():
+    for index in range(len(history)):
+
+        row = history.iloc[index]
+        health_row = health.iloc[index]
+
         records.append(
             {
                 "timestamp": row["Timestamp"].isoformat(),
-                "rms": float(row[f"{prefix}_RMS"]),
+
+                "rms": float(
+                    row[f"{prefix}_RMS"]
+                ),
+
                 "kurtosis": float(
                     row[f"{prefix}_Kurtosis"]
                 ),
+
                 "peak_to_peak": float(
                     row[f"{prefix}_Peak2Peak"]
                 ),
+
                 "crest_factor": float(
                     row[f"{prefix}_CrestFactor"]
+                ),
+
+                "health_score": float(
+                    health_row["HealthScore"]
+                ),
+
+                "degradation_index": float(
+                    health_row["DegradationIndex"]
+                ),
+
+                "condition": str(
+                    health_row["Condition"]
                 ),
             }
         )

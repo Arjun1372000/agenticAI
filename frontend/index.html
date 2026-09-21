@@ -73,12 +73,13 @@
 
                 <div class="asset-state">
 
-                    <span class="state-indicator"></span>
+                    <span class="state-indicator" id="stateIndicator"></span>
 
                     <div>
-                        <div class="state-label">CURRENT STATE</div>
-                        <div class="state-value">
-                            Awaiting diagnostics
+                        <div class="state-label">HEALTH STATUS</div>
+
+                        <div class="state-value" id="healthCondition">
+                            —
                         </div>
                     </div>
 
@@ -162,6 +163,24 @@
 
             </div>
 
+            <div class="metric-card health-card">
+
+                <div class="metric-header">
+                    <span>Health Score</span>
+                    <span class="metric-symbol">HI</span>
+                </div>
+
+                <div class="metric-value">
+                    <span id="healthScore">—</span>
+                    <span class="score-unit">/ 100</span>
+                </div>
+
+                <div class="metric-description">
+                    Current degradation-based health index
+                </div>
+
+            </div>
+
         </section>
 
 
@@ -212,6 +231,18 @@
                     <div class="chart-container">
                         <canvas id="crestChart"></canvas>
                     </div>
+                </div>
+
+                <div class="chart-card">
+
+                    <div class="chart-title">
+                        Health Score
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="healthChart"></canvas>
+                    </div>
+
                 </div>
 
             </div>

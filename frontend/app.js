@@ -7,7 +7,8 @@ let charts = {
     rms: null,
     kurtosis: null,
     peak: null,
-    crest: null
+    crest: null,
+    health: null
 };
 
 
@@ -53,19 +54,81 @@ function setConnectionState(connected) {
 function updateMetrics(latest) {
 
     document.getElementById("rms").textContent =
-        latest.rms.toFixed(6);
+        latest.features.rms.toFixed(6);
 
     document.getElementById("kurtosis").textContent =
-        latest.kurtosis.toFixed(6);
+        latest.features.kurtosis.toFixed(6);
 
     document.getElementById("peakToPeak").textContent =
-        latest.peak_to_peak.toFixed(6);
+        latest.features.peak_to_peak.toFixed(6);
 
     document.getElementById("crestFactor").textContent =
-        latest.crest_factor.toFixed(6);
+        latest.features.crest_factor.toFixed(6);
+
+    document.getElementById("healthScore").textContent =
+        latest.health.score.toFixed(1);
+
+    document.getElementById("healthCondition").textContent =
+        latest.health.condition.toUpperCase();
 
     document.getElementById("timestamp").textContent =
         formatTimestamp(latest.timestamp);
+
+    updateHealthVisuals(
+        latest.health.condition
+    );
+}
+
+
+function updateHealthVisuals(condition) {
+
+    const indicator =
+        document.getElementById("stateIndicator");
+
+    const conditionElement =
+        document.getElementById("healthCondition");
+
+    const normalized =
+        condition.toLowerCase();
+
+    indicator.className =
+        "state-indicator";
+
+    conditionElement.className =
+        "state-value";
+
+    if (normalized === "healthy") {
+
+        indicator.classList.add("healthy");
+
+        conditionElement.classList.add(
+            "healthy-text"
+        );
+
+    } else if (normalized === "degraded") {
+
+        indicator.classList.add("degraded");
+
+        conditionElement.classList.add(
+            "degraded-text"
+        );
+
+    } else if (normalized === "severe") {
+
+        indicator.classList.add("severe");
+
+        conditionElement.classList.add(
+            "severe-text"
+        );
+
+    } else if (normalized === "critical") {
+
+        indicator.classList.add("critical");
+
+        conditionElement.classList.add(
+            "critical-text"
+        );
+    }
 }
 
 
@@ -83,8 +146,11 @@ function formatTimestamp(timestamp) {
 function prepareHistory(history) {
 
     return {
+
         labels: history.map(
-            item => formatChartTimestamp(item.timestamp)
+            item => formatChartTimestamp(
+                item.timestamp
+            )
         ),
 
         rms: history.map(
@@ -101,6 +167,10 @@ function prepareHistory(history) {
 
         crest: history.map(
             item => item.crest_factor
+        ),
+
+        health: history.map(
+            item => item.health_score
         )
     };
 }
@@ -221,6 +291,12 @@ function initializeCharts() {
         [],
         "Crest Factor"
     );
+
+    charts.health = createChart(
+        "healthChart",
+        [],
+        "Health Score"
+    );
 }
 
 
@@ -273,6 +349,12 @@ async function loadBearing(bearingId) {
             charts.crest,
             history.labels,
             history.crest
+        );
+
+        updateChart(
+            charts.health,
+            history.labels,
+            history.health
         );
 
         document.getElementById("assetName").textContent =

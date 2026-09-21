@@ -306,7 +306,7 @@ select:focus {
     display: grid;
 
     grid-template-columns:
-        repeat(4, 1fr);
+        repeat(5, 1fr);
 
     gap: 14px;
 
@@ -633,4 +633,64 @@ footer {
         gap: 14px;
         flex-direction: column;
     }
+}
+
+
+/* =========================
+   HEALTH STATUS
+   ========================= */
+
+.state-indicator {
+    transition:
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.state-indicator.healthy {
+    background: var(--green);
+    box-shadow:
+        0 0 0 5px var(--green-soft);
+}
+
+.state-indicator.degraded {
+    background: #d49a32;
+    box-shadow:
+        0 0 0 5px rgba(212, 154, 50, 0.14);
+}
+
+.state-indicator.critical {
+    background: #d35f5f;
+    box-shadow:
+        0 0 0 5px rgba(211, 95, 95, 0.14);
+}
+
+.healthy-text {
+    color: var(--green);
+}
+
+.degraded-text {
+    color: #b47a19;
+}
+
+.critical-text {
+    color: #c14d4d;
+}
+
+.score-unit {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.health-card {
+    border-top: 3px solid var(--green);
+}
+
+.state-indicator.severe {
+    background: #d35f5f;
+    box-shadow: 0 0 0 5px rgba(211, 95, 95, 0.14);
+}
+
+.severe-text {
+    color: #c14d4d;
 }

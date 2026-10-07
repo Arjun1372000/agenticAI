@@ -15,10 +15,10 @@ FEATURE_FILE = Path("data/processed/test2_features.csv")
 mcp = MCPServer(
     "Predictive Maintenance MCP",
     instructions=(
-        "Use the bearing diagnostic tools to assess current bearing "
-        "condition, degradation trends, and maintenance priority. "
-        "Health condition is a degradation assessment and does not by "
-        "itself confirm physical failure."
+        "Use the diagnostic tools to assess historical bearing "
+        "telemetry. When an observation index is supplied, all "
+        "analysis must be based only on telemetry available up to "
+        "that observation."
     ),
 )
 
@@ -42,27 +42,60 @@ def validate_bearing_id(bearing_id: int) -> None:
         )
 
 
+def get_as_of_frame(
+    df: pd.DataFrame,
+    observation_index: int | None,
+) -> tuple[pd.DataFrame, int]:
+
+    if observation_index is None:
+        observation_index = len(df) - 1
+
+    if observation_index < 0:
+        raise ValueError(
+            "observation_index cannot be negative"
+        )
+
+    if observation_index >= len(df):
+        raise ValueError(
+            f"observation_index must be between 0 and {len(df) - 1}"
+        )
+
+    frame = df.iloc[
+        : observation_index + 1
+    ].copy()
+
+    return frame, observation_index
+
+
 @mcp.tool()
 def get_bearing_health(
     bearing_id: int = 1,
+    observation_index: int | None = None,
 ) -> str:
-    """Get the current health assessment of an industrial bearing."""
+    """Get bearing health at a specific historical observation."""
 
     validate_bearing_id(bearing_id)
 
     df = load_features()
-    health = calculate_health_series(
+
+    frame, observation_index = get_as_of_frame(
         df,
+        observation_index,
+    )
+
+    health = calculate_health_series(
+        frame,
         bearing_id=bearing_id,
     )
 
-    latest_features = df.iloc[-1]
+    latest_features = frame.iloc[-1]
     latest_health = health.iloc[-1]
 
     prefix = f"B{bearing_id}"
 
     return (
         f"Bearing {bearing_id}\n"
+        f"Observation Index: {observation_index}\n"
         f"Timestamp: {latest_features['Timestamp']}\n"
         f"Condition: {latest_health['Condition']}\n"
         f"Health Score: {latest_health['HealthScore']:.2f}/100\n"
@@ -80,9 +113,10 @@ def get_bearing_health(
 @mcp.tool()
 def get_bearing_trend(
     bearing_id: int = 1,
+    observation_index: int | None = None,
     window: int = 24,
 ) -> str:
-    """Analyze the recent degradation trend of an industrial bearing."""
+    """Analyze the recent degradation trend ending at a historical observation."""
 
     validate_bearing_id(bearing_id)
 
@@ -91,15 +125,15 @@ def get_bearing_trend(
             "window must be at least 5 observations"
         )
 
-    if window > 984:
-        raise ValueError(
-            "window cannot exceed 984 observations"
-        )
-
     df = load_features()
 
-    health = calculate_health_series(
+    frame, observation_index = get_as_of_frame(
         df,
+        observation_index,
+    )
+
+    health = calculate_health_series(
+        frame,
         bearing_id=bearing_id,
     )
 
@@ -123,65 +157,56 @@ def get_bearing_trend(
         )[0]
     )
 
-    first_degradation = float(
-        recent["DegradationIndex"].iloc[0]
-    )
-
-    latest_degradation = float(
-        recent["DegradationIndex"].iloc[-1]
-    )
-
-    first_health = float(
-        recent["HealthScore"].iloc[0]
-    )
-
-    latest_health = float(
-        recent["HealthScore"].iloc[-1]
-    )
-
     if degradation_slope > 0.10:
         trend = "Increasing degradation"
     elif degradation_slope < -0.10:
-        trend = "Improving / decreasing degradation"
+        trend = "Decreasing degradation"
     else:
         trend = "Relatively stable"
 
     return (
         f"Bearing {bearing_id}\n"
-        f"Analysis window: {window} observations\n"
+        f"Observation Index: {observation_index}\n"
+        f"Analysis Timestamp: {frame['Timestamp'].iloc[-1]}\n"
+        f"Analysis Window: {len(recent)} observations\n"
         f"Trend: {trend}\n"
-        f"Degradation slope: "
+        f"Degradation Slope: "
         f"{degradation_slope:.4f} per observation\n"
-        f"Health-score slope: "
+        f"Health Score Slope: "
         f"{health_slope:.4f} per observation\n"
-        f"Starting degradation index: "
-        f"{first_degradation:.2f}\n"
-        f"Latest degradation index: "
-        f"{latest_degradation:.2f}\n"
-        f"Starting health score: "
-        f"{first_health:.2f}\n"
-        f"Latest health score: "
-        f"{latest_health:.2f}"
+        f"Starting Degradation Index: "
+        f"{recent['DegradationIndex'].iloc[0]:.2f}\n"
+        f"Latest Degradation Index: "
+        f"{recent['DegradationIndex'].iloc[-1]:.2f}\n"
+        f"Starting Health Score: "
+        f"{recent['HealthScore'].iloc[0]:.2f}\n"
+        f"Latest Health Score: "
+        f"{recent['HealthScore'].iloc[-1]:.2f}"
     )
 
 
 @mcp.tool()
 def get_maintenance_recommendation(
     bearing_id: int = 1,
+    observation_index: int | None = None,
 ) -> str:
-    """Generate a maintenance recommendation from bearing health evidence."""
+    """Generate a maintenance recommendation from historical bearing evidence."""
 
     validate_bearing_id(bearing_id)
 
     df = load_features()
 
-    health = calculate_health_series(
+    frame, observation_index = get_as_of_frame(
         df,
+        observation_index,
+    )
+
+    health = calculate_health_series(
+        frame,
         bearing_id=bearing_id,
     )
 
     latest = health.iloc[-1]
-
     recent = health.tail(24)
 
     degradation_slope = float(
@@ -226,6 +251,8 @@ def get_maintenance_recommendation(
 
     return (
         f"Bearing {bearing_id}\n"
+        f"Observation Index: {observation_index}\n"
+        f"Timestamp: {frame['Timestamp'].iloc[-1]}\n"
         f"Condition: {condition}\n"
         f"Health Score: {score:.2f}/100\n"
         f"Degradation Index: {degradation:.2f}\n"
@@ -233,6 +260,76 @@ def get_maintenance_recommendation(
         f"Maintenance Priority: {priority}\n"
         f"Recommended Action: {action}"
     )
+
+
+@mcp.tool()
+def compare_bearings(
+    observation_index: int | None = None,
+) -> str:
+    """Compare the health of all four bearings at the same historical observation."""
+
+    df = load_features()
+
+    frame, observation_index = get_as_of_frame(
+        df,
+        observation_index,
+    )
+
+    rows = []
+
+    for bearing_id in range(1, 5):
+
+        health = calculate_health_series(
+            frame,
+            bearing_id=bearing_id,
+        )
+
+        latest = health.iloc[-1]
+
+        rows.append(
+            {
+                "bearing_id": bearing_id,
+                "condition": str(
+                    latest["Condition"]
+                ),
+                "health_score": float(
+                    latest["HealthScore"]
+                ),
+                "degradation_index": float(
+                    latest["DegradationIndex"]
+                ),
+            }
+        )
+
+    rows.sort(
+        key=lambda row: row["health_score"]
+    )
+
+    output = [
+        "Bearing Comparison",
+        f"Observation Index: {observation_index}",
+        f"Timestamp: {frame['Timestamp'].iloc[-1]}",
+        "",
+    ]
+
+    for rank, row in enumerate(rows, start=1):
+
+        output.append(
+            f"{rank}. Bearing {row['bearing_id']} | "
+            f"{row['condition']} | "
+            f"Health Score: {row['health_score']:.2f} | "
+            f"Degradation: {row['degradation_index']:.2f}"
+        )
+
+    output.extend(
+        [
+            "",
+            f"Highest priority based on current health: "
+            f"Bearing {rows[0]['bearing_id']}",
+        ]
+    )
+
+    return "\n".join(output)
 
 
 if __name__ == "__main__":

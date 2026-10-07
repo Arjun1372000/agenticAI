@@ -3,64 +3,94 @@ import asyncio
 from mcp import Client
 
 
+MCP_URL = "http://127.0.0.1:8001/mcp"
+
+
+def print_result(title: str, result) -> None:
+    print("\n" + "=" * 60)
+    print(title)
+    print("=" * 60)
+
+    for block in result.content:
+        text = getattr(block, "text", None)
+
+        if text:
+            print(text)
+
+
 async def main() -> None:
 
-    async with Client(
-        "http://127.0.0.1:8001/mcp"
-    ) as client:
+    async with Client(MCP_URL) as client:
 
         result = await client.list_tools()
 
-        print("\nAvailable MCP tools:")
+        print("Available MCP tools:")
 
         for tool in result.tools:
             print(f"  - {tool.name}")
 
-        print("\n" + "=" * 60)
-        print("BEARING HEALTH")
-        print("=" * 60)
-
-        response = await client.call_tool(
+        # ---------------------------------------------------------
+        # Bearing Health
+        # ---------------------------------------------------------
+        health_result = await client.call_tool(
             "get_bearing_health",
             {
                 "bearing_id": 1,
+                "observation_index": 983,
             },
         )
 
-        for content in response.content:
-            if hasattr(content, "text"):
-                print(content.text)
+        print_result(
+            "BEARING HEALTH",
+            health_result,
+        )
 
-        print("\n" + "=" * 60)
-        print("BEARING TREND")
-        print("=" * 60)
-
-        response = await client.call_tool(
+        # ---------------------------------------------------------
+        # Bearing Trend
+        # ---------------------------------------------------------
+        trend_result = await client.call_tool(
             "get_bearing_trend",
             {
                 "bearing_id": 1,
-                "window": 24,
+                "observation_index": 983,
             },
         )
 
-        for content in response.content:
-            if hasattr(content, "text"):
-                print(content.text)
+        print_result(
+            "BEARING TREND",
+            trend_result,
+        )
 
-        print("\n" + "=" * 60)
-        print("MAINTENANCE RECOMMENDATION")
-        print("=" * 60)
-
-        response = await client.call_tool(
+        # ---------------------------------------------------------
+        # Maintenance Recommendation
+        # ---------------------------------------------------------
+        recommendation_result = await client.call_tool(
             "get_maintenance_recommendation",
             {
                 "bearing_id": 1,
+                "observation_index": 983,
             },
         )
 
-        for content in response.content:
-            if hasattr(content, "text"):
-                print(content.text)
+        print_result(
+            "MAINTENANCE RECOMMENDATION",
+            recommendation_result,
+        )
+
+        # ---------------------------------------------------------
+        # Compare Bearings
+        # ---------------------------------------------------------
+        comparison_result = await client.call_tool(
+            "compare_bearings",
+            {
+                "observation_index": 983,
+            },
+        )
+
+        print_result(
+            "COMPARE BEARINGS",
+            comparison_result,
+        )
 
 
 if __name__ == "__main__":

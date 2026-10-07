@@ -1,7 +1,56 @@
 const API_BASE = "http://127.0.0.1:8000";
 
-const selector = document.getElementById("bearingSelector");
-const connectionStatus = document.getElementById("connectionStatus");
+const selector =
+    document.getElementById("bearingSelector");
+
+const connectionStatus =
+    document.getElementById("connectionStatus");
+
+const assetName =
+    document.getElementById("assetName");
+
+const timelineSlider =
+    document.getElementById("timelineSlider");
+
+const selectedObservation =
+    document.getElementById(
+        "selectedObservation"
+    );
+
+const selectedTimestamp =
+    document.getElementById(
+        "selectedTimestamp"
+    );
+
+const agentSnapshot =
+    document.getElementById(
+        "agentSnapshot"
+    );
+
+const analyzeSelected =
+    document.getElementById(
+        "analyzeSelected"
+    );
+
+const compareBearings =
+    document.getElementById(
+        "compareBearings"
+    );
+
+const agentStatus =
+    document.getElementById(
+        "agentStatus"
+    );
+
+const agentTools =
+    document.getElementById(
+        "agentTools"
+    );
+
+const agentResponse =
+    document.getElementById(
+        "agentResponse"
+    );
 
 let charts = {
     rms: null,
@@ -11,82 +60,182 @@ let charts = {
     health: null
 };
 
+let historicalData = [];
+let selectedIndex = 983;
 
-async function getLatest(bearingId) {
+
+async function getLatest(
+    bearingId
+) {
+
     const response = await fetch(
         `${API_BASE}/api/bearings/${bearingId}/latest`
     );
 
     if (!response.ok) {
-        throw new Error("Could not load latest observation.");
+        throw new Error(
+            "Could not load latest observation."
+        );
     }
 
     return response.json();
 }
 
 
-async function getHistory(bearingId) {
+async function getHistory(
+    bearingId
+) {
+
     const response = await fetch(
-        `${API_BASE}/api/bearings/${bearingId}/history?limit=100`
+        `${API_BASE}/api/bearings/${bearingId}/history?limit=984`
     );
 
     if (!response.ok) {
-        throw new Error("Could not load observation history.");
+        throw new Error(
+            "Could not load observation history."
+        );
     }
 
     return response.json();
 }
 
 
-function setConnectionState(connected) {
-    const dot = document.querySelector(".connection-dot");
+async function getSnapshot(
+    bearingId,
+    index
+) {
 
-    if (connected) {
-        connectionStatus.textContent = "Connected";
-        dot.style.background = "#70d6a0";
-    } else {
-        connectionStatus.textContent = "Disconnected";
-        dot.style.background = "#d66f70";
+    const response = await fetch(
+        `${API_BASE}/api/bearings/${bearingId}/snapshot?index=${index}`
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            "Could not load telemetry snapshot."
+        );
     }
+
+    return response.json();
 }
 
 
-function updateMetrics(latest) {
+function renderAgentMarkdown(markdown) {
+    if (!markdown) {
+        return "";
+    }
 
-    document.getElementById("rms").textContent =
-        latest.features.rms.toFixed(6);
+    // Llama may return escaped Markdown such as \*\*text\*\*.
+    const normalized = markdown.replace(
+        /\\(\*{1,3}|_{1,3}|`|~~)/g,
+        "$1"
+    );
 
-    document.getElementById("kurtosis").textContent =
-        latest.features.kurtosis.toFixed(6);
-
-    document.getElementById("peakToPeak").textContent =
-        latest.features.peak_to_peak.toFixed(6);
-
-    document.getElementById("crestFactor").textContent =
-        latest.features.crest_factor.toFixed(6);
-
-    document.getElementById("healthScore").textContent =
-        latest.health.score.toFixed(1);
-
-    document.getElementById("healthCondition").textContent =
-        latest.health.condition.toUpperCase();
-
-    document.getElementById("timestamp").textContent =
-        formatTimestamp(latest.timestamp);
-
-    updateHealthVisuals(
-        latest.health.condition
+    return DOMPurify.sanitize(
+        marked.parse(normalized, {
+            breaks: true
+        })
     );
 }
 
 
-function updateHealthVisuals(condition) {
+function setConnectionState(
+    connected
+) {
+
+    const dot =
+        document.querySelector(
+            ".connection-dot"
+        );
+
+    if (connected) {
+
+        connectionStatus.textContent =
+            "Connected";
+
+        dot.style.background =
+            "#70d6a0";
+
+    } else {
+
+        connectionStatus.textContent =
+            "Disconnected";
+
+        dot.style.background =
+            "#d66f70";
+    }
+}
+
+
+function updateMetrics(
+    data
+) {
+
+    document.getElementById(
+        "rms"
+    ).textContent =
+        data.features.rms.toFixed(6);
+
+    document.getElementById(
+        "kurtosis"
+    ).textContent =
+        data.features.kurtosis.toFixed(6);
+
+    document.getElementById(
+        "peakToPeak"
+    ).textContent =
+        data.features.peak_to_peak.toFixed(6);
+
+    document.getElementById(
+        "crestFactor"
+    ).textContent =
+        data.features.crest_factor.toFixed(6);
+
+    document.getElementById(
+        "healthScore"
+    ).textContent =
+        data.health.score.toFixed(1);
+
+    document.getElementById(
+        "healthScoreMetric"
+    ).textContent =
+        data.health.score.toFixed(1);
+
+    document.getElementById(
+        "degradationIndex"
+    ).textContent =
+        data.health.degradation_index.toFixed(2);
+
+    document.getElementById(
+        "healthCondition"
+    ).textContent =
+        data.health.condition.toUpperCase();
+
+    document.getElementById(
+        "timestamp"
+    ).textContent =
+        formatTimestamp(
+            data.timestamp
+        );
+
+    updateHealthVisuals(
+        data.health.condition
+    );
+}
+
+
+function updateHealthVisuals(
+    condition
+) {
 
     const indicator =
-        document.getElementById("stateIndicator");
+        document.getElementById(
+            "stateIndicator"
+        );
 
     const conditionElement =
-        document.getElementById("healthCondition");
+        document.getElementById(
+            "healthCondition"
+        );
 
     const normalized =
         condition.toLowerCase();
@@ -99,31 +248,45 @@ function updateHealthVisuals(condition) {
 
     if (normalized === "healthy") {
 
-        indicator.classList.add("healthy");
+        indicator.classList.add(
+            "healthy"
+        );
 
         conditionElement.classList.add(
             "healthy-text"
         );
 
-    } else if (normalized === "degraded") {
+    } else if (
+        normalized === "degraded"
+    ) {
 
-        indicator.classList.add("degraded");
+        indicator.classList.add(
+            "degraded"
+        );
 
         conditionElement.classList.add(
             "degraded-text"
         );
 
-    } else if (normalized === "severe") {
+    } else if (
+        normalized === "severe"
+    ) {
 
-        indicator.classList.add("severe");
+        indicator.classList.add(
+            "severe"
+        );
 
         conditionElement.classList.add(
             "severe-text"
         );
 
-    } else if (normalized === "critical") {
+    } else if (
+        normalized === "critical"
+    ) {
 
-        indicator.classList.add("critical");
+        indicator.classList.add(
+            "critical"
+        );
 
         conditionElement.classList.add(
             "critical-text"
@@ -132,8 +295,13 @@ function updateHealthVisuals(condition) {
 }
 
 
-function formatTimestamp(timestamp) {
-    return new Date(timestamp).toLocaleString(
+function formatTimestamp(
+    timestamp
+) {
+
+    return new Date(
+        timestamp
+    ).toLocaleString(
         undefined,
         {
             dateStyle: "medium",
@@ -143,14 +311,33 @@ function formatTimestamp(timestamp) {
 }
 
 
-function prepareHistory(history) {
+function formatChartTimestamp(
+    timestamp
+) {
+
+    return new Date(
+        timestamp
+    ).toLocaleDateString(
+        undefined,
+        {
+            month: "short",
+            day: "numeric"
+        }
+    );
+}
+
+
+function prepareHistory(
+    history
+) {
 
     return {
 
         labels: history.map(
-            item => formatChartTimestamp(
-                item.timestamp
-            )
+            item =>
+                formatChartTimestamp(
+                    item.timestamp
+                )
         ),
 
         rms: history.map(
@@ -176,22 +363,12 @@ function prepareHistory(history) {
 }
 
 
-function formatChartTimestamp(timestamp) {
-
-    return new Date(timestamp).toLocaleDateString(
-        undefined,
-        {
-            month: "short",
-            day: "numeric"
-        }
-    );
-}
-
-
 function chartOptions() {
 
     return {
+
         responsive: true,
+
         maintainAspectRatio: false,
 
         interaction: {
@@ -200,6 +377,7 @@ function chartOptions() {
         },
 
         plugins: {
+
             legend: {
                 display: false
             },
@@ -214,7 +392,9 @@ function chartOptions() {
         },
 
         scales: {
+
             x: {
+
                 grid: {
                     display: false
                 },
@@ -225,10 +405,12 @@ function chartOptions() {
             },
 
             y: {
+
                 beginAtZero: false,
 
                 grid: {
-                    color: "rgba(255,255,255,0.06)"
+                    color:
+                        "rgba(45, 94, 120, 0.08)"
                 }
             }
         }
@@ -236,25 +418,42 @@ function chartOptions() {
 }
 
 
-function createChart(canvasId, values, label) {
+function createChart(
+    canvasId,
+    label
+) {
 
     return new Chart(
-        document.getElementById(canvasId),
+        document.getElementById(
+            canvasId
+        ),
         {
+
             type: "line",
 
             data: {
+
                 labels: [],
+
                 datasets: [
                     {
-                        label,
-                        data: values,
 
-                        borderColor: "#1976a8",
-                        backgroundColor: "rgba(25, 118, 168, 0.08)",
+                        label,
+
+                        data: [],
+
+                        borderColor:
+                            "#1976a8",
+
+                        backgroundColor:
+                            "rgba(25, 118, 168, 0.08)",
+
                         borderWidth: 2,
+
                         pointRadius: 0,
+
                         tension: 0.28,
+
                         fill: true
                     }
                 ]
@@ -268,166 +467,263 @@ function createChart(canvasId, values, label) {
 
 function initializeCharts() {
 
-    charts.rms = createChart(
-        "rmsChart",
-        [],
-        "RMS"
-    );
+    charts.rms =
+        createChart(
+            "rmsChart",
+            "RMS"
+        );
 
-    charts.kurtosis = createChart(
-        "kurtosisChart",
-        [],
-        "Kurtosis"
-    );
+    charts.kurtosis =
+        createChart(
+            "kurtosisChart",
+            "Kurtosis"
+        );
 
-    charts.peak = createChart(
-        "peakChart",
-        [],
-        "Peak-to-Peak"
-    );
+    charts.peak =
+        createChart(
+            "peakChart",
+            "Peak-to-Peak"
+        );
 
-    charts.crest = createChart(
-        "crestChart",
-        [],
-        "Crest Factor"
-    );
+    charts.crest =
+        createChart(
+            "crestChart",
+            "Crest Factor"
+        );
 
-    charts.health = createChart(
-        "healthChart",
-        [],
-        "Health Score"
-    );
+    charts.health =
+        createChart(
+            "healthChart",
+            "Health Score"
+        );
 }
 
 
-function updateChart(chart, labels, values) {
+function updateChart(
+    chart,
+    labels,
+    values
+) {
 
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = values;
+    chart.data.labels =
+        labels;
+
+    chart.data.datasets[0].data =
+        values;
 
     chart.update();
 }
 
 
-async function loadBearing(bearingId) {
+async function selectObservation(
+    index
+) {
+
+    const bearingId =
+        Number(
+            selector.value
+        );
+
+    selectedIndex =
+        Number(index);
+
+    timelineSlider.value =
+        selectedIndex;
+
+    const local =
+        historicalData[
+            selectedIndex
+        ];
+
+    if (local) {
+
+        selectedObservation.textContent =
+            selectedIndex;
+
+        selectedTimestamp.textContent =
+            formatTimestamp(
+                local.timestamp
+            );
+
+        agentSnapshot.textContent =
+            `Bearing ${bearingId} • ${
+                formatTimestamp(
+                    local.timestamp
+                )
+            }`;
+    }
 
     try {
 
-        connectionStatus.textContent = "Loading...";
+        const snapshot =
+            await getSnapshot(
+                bearingId,
+                selectedIndex
+            );
 
-        const [latest, historyResponse] =
-            await Promise.all([
-                getLatest(bearingId),
-                getHistory(bearingId)
-            ]);
-
-        updateMetrics(latest);
-
-        const history = prepareHistory(
-            historyResponse.data
+        updateMetrics(
+            snapshot
         );
+
+    } catch (error) {
+
+        console.error(error);
+    }
+}
+
+
+async function loadBearing(
+    bearingId
+) {
+
+    try {
+
+        connectionStatus.textContent =
+            "Loading...";
+
+        const [
+            latest,
+            historyResponse
+        ] = await Promise.all(
+            [
+                getLatest(
+                    bearingId
+                ),
+
+                getHistory(
+                    bearingId
+                )
+            ]
+        );
+
+        historicalData =
+            historyResponse.data;
+
+        timelineSlider.max =
+            historicalData.length - 1;
 
         updateChart(
             charts.rms,
-            history.labels,
-            history.rms
+            prepareHistory(
+                historicalData
+            ).labels,
+            prepareHistory(
+                historicalData
+            ).rms
         );
+
+        const prepared =
+            prepareHistory(
+                historicalData
+            );
 
         updateChart(
             charts.kurtosis,
-            history.labels,
-            history.kurtosis
+            prepared.labels,
+            prepared.kurtosis
         );
 
         updateChart(
             charts.peak,
-            history.labels,
-            history.peak
+            prepared.labels,
+            prepared.peak
         );
 
         updateChart(
             charts.crest,
-            history.labels,
-            history.crest
+            prepared.labels,
+            prepared.crest
         );
 
         updateChart(
             charts.health,
-            history.labels,
-            history.health
+            prepared.labels,
+            prepared.health
         );
 
-        document.getElementById("assetName").textContent =
+        assetName.textContent =
             `Bearing ${bearingId}`;
 
-        setConnectionState(true);
+        selectedIndex =
+            historicalData.length - 1;
+
+        await selectObservation(
+            selectedIndex
+        );
+
+        setConnectionState(
+            true
+        );
 
     } catch (error) {
 
         console.error(error);
 
-        setConnectionState(false);
-
+        setConnectionState(
+            false
+        );
     }
 }
 
 
-
-const agentQuestion =
-    document.getElementById("agentQuestion");
-
-const askAgentButton =
-    document.getElementById("askAgent");
-
-const agentStatus =
-    document.getElementById("agentStatus");
-
-const agentResponse =
-    document.getElementById("agentResponse");
-
-
-async function askDiagnosticAgent() {
+async function runAgentAnalysis(
+    question
+) {
 
     const bearingId =
-        Number(selector.value);
-
-    const question =
-        agentQuestion.value.trim();
-
-    if (!question) {
-        return;
-    }
+        Number(
+            selector.value
+        );
 
     agentStatus.textContent =
-        "Agent is analyzing...";
+        "Agent is analyzing the selected snapshot...";
+
+    agentTools.textContent =
+        "Consulting MCP diagnostic tools...";
 
     agentResponse.textContent =
-        "Consulting diagnostic tools...";
+        "Please wait...";
 
-    askAgentButton.disabled = true;
+    analyzeSelected.disabled =
+        true;
+
+    compareBearings.disabled =
+        true;
 
     try {
 
-        const response = await fetch(
-            `${API_BASE}/api/agent/ask`,
-            {
-                method: "POST",
+        const response =
+            await fetch(
+                `${API_BASE}/api/agent/ask`,
+                {
+                    method: "POST",
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                body: JSON.stringify({
-                    bearing_id: bearingId,
-                    question: question
-                })
-            }
-        );
+                    body: JSON.stringify(
+                        {
+                            bearing_id:
+                                bearingId,
+
+                            observation_index:
+                                selectedIndex,
+
+                            question
+                        }
+                    )
+                }
+            );
 
         if (!response.ok) {
+
+            const detail =
+                await response.text();
+
             throw new Error(
-                "Agent request failed."
+                detail
             );
         }
 
@@ -435,10 +731,19 @@ async function askDiagnosticAgent() {
             await response.json();
 
         agentStatus.textContent =
-            `Bearing ${result.bearing_id} • Agent response`;
+            `Bearing ${result.bearing_id} • Snapshot ${result.observation_index}`;
 
-        agentResponse.textContent =
-            result.answer;
+        agentTools.textContent =
+            result.tools_used.length
+                ? `MCP tools used: ${
+                    result.tools_used.join(
+                        " → "
+                    )
+                }`
+                : "No MCP tools used.";
+
+        agentResponse.innerHTML = 
+            renderAgentMarkdown(result.answer);
 
     } catch (error) {
 
@@ -452,40 +757,68 @@ async function askDiagnosticAgent() {
 
     } finally {
 
-        askAgentButton.disabled =
+        analyzeSelected.disabled =
+            false;
+
+        compareBearings.disabled =
             false;
     }
 }
 
 
-askAgentButton.addEventListener(
-    "click",
-    askDiagnosticAgent
-);
-
-
-agentQuestion.addEventListener(
-    "keydown",
+timelineSlider.addEventListener(
+    "change",
     event => {
 
-        if (event.key === "Enter") {
-            askDiagnosticAgent();
-        }
-
+        selectObservation(
+            Number(
+                event.target.value
+            )
+        );
     }
 );
-
 
 
 selector.addEventListener(
     "change",
     event => {
+
         loadBearing(
-            Number(event.target.value)
+            Number(
+                event.target.value
+            )
+        );
+    }
+);
+
+
+analyzeSelected.addEventListener(
+    "click",
+    () => {
+
+        runAgentAnalysis(
+            "Analyze the selected telemetry snapshot. "
+            + "Assess the bearing condition, explain the "
+            + "recent degradation trend, and recommend "
+            + "the appropriate maintenance action."
+        );
+    }
+);
+
+
+compareBearings.addEventListener(
+    "click",
+    () => {
+
+        runAgentAnalysis(
+            "Compare all four bearings at the selected "
+            + "telemetry point and identify which bearing "
+            + "requires the most attention. Explain why."
         );
     }
 );
 
 
 initializeCharts();
+
 loadBearing(1);

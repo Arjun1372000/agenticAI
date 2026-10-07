@@ -372,6 +372,111 @@ async function loadBearing(bearingId) {
 }
 
 
+
+const agentQuestion =
+    document.getElementById("agentQuestion");
+
+const askAgentButton =
+    document.getElementById("askAgent");
+
+const agentStatus =
+    document.getElementById("agentStatus");
+
+const agentResponse =
+    document.getElementById("agentResponse");
+
+
+async function askDiagnosticAgent() {
+
+    const bearingId =
+        Number(selector.value);
+
+    const question =
+        agentQuestion.value.trim();
+
+    if (!question) {
+        return;
+    }
+
+    agentStatus.textContent =
+        "Agent is analyzing...";
+
+    agentResponse.textContent =
+        "Consulting diagnostic tools...";
+
+    askAgentButton.disabled = true;
+
+    try {
+
+        const response = await fetch(
+            `${API_BASE}/api/agent/ask`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+                    bearing_id: bearingId,
+                    question: question
+                })
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Agent request failed."
+            );
+        }
+
+        const result =
+            await response.json();
+
+        agentStatus.textContent =
+            `Bearing ${result.bearing_id} • Agent response`;
+
+        agentResponse.textContent =
+            result.answer;
+
+    } catch (error) {
+
+        console.error(error);
+
+        agentStatus.textContent =
+            "Agent unavailable";
+
+        agentResponse.textContent =
+            "Could not obtain an agent response.";
+
+    } finally {
+
+        askAgentButton.disabled =
+            false;
+    }
+}
+
+
+askAgentButton.addEventListener(
+    "click",
+    askDiagnosticAgent
+);
+
+
+agentQuestion.addEventListener(
+    "keydown",
+    event => {
+
+        if (event.key === "Enter") {
+            askDiagnosticAgent();
+        }
+
+    }
+);
+
+
+
 selector.addEventListener(
     "change",
     event => {

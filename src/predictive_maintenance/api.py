@@ -5,6 +5,10 @@ from fastapi import FastAPI, HTTPException
 
 from predictive_maintenance.health import calculate_health_series
 
+from pydantic import BaseModel
+
+from predictive_maintenance.agent import ask_agent
+
 
 app = FastAPI(
     title="Predictive Maintenance API",
@@ -16,6 +20,9 @@ FEATURE_FILE = Path(
     "data/processed/test2_features.csv"
 )
 
+class AgentRequest(BaseModel):
+    question: str
+    bearing_id: int = 1
 
 def load_features() -> pd.DataFrame:
     if not FEATURE_FILE.exists():
@@ -172,3 +179,37 @@ def get_history(
         "count": len(records),
         "data": records,
     }
+
+
+@app.post("/api/agent/ask")
+async def ask_diagnostic_agent(request: AgentRequest):
+
+    validate_bearing_id(
+        request.bearing_id
+    )
+
+    question = (
+        f"The user is asking about Bearing "
+        f"{request.bearing_id}.\n\n"
+        f"User request:\n"
+        f"{request.question}"
+    )
+
+    try:
+
+        answer = await ask_agent(
+            question
+        )
+
+        return {
+            "bearing_id": request.bearing_id,
+            "question": request.question,
+            "answer": answer,
+        }
+
+    except Exception as exc:
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Agent error: {exc}",
+        ) from exc

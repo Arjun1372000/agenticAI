@@ -18,6 +18,8 @@ dependencies = [
     "joblib",
     "fastapi",
     "uvicorn[standard]",
+    "mcp[cli]",
+    "ollama",
 ]
 
 

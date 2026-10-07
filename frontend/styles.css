@@ -694,3 +694,71 @@ footer {
 .severe-text {
     color: #c14d4d;
 }
+
+
+.agent-panel {
+    margin-top: 28px;
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+.agent-input-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.agent-input-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 13px 15px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.agent-input-row input:focus {
+    border-color: var(--blue);
+}
+
+.agent-input-row button {
+    padding: 13px 20px;
+    border: none;
+    border-radius: 10px;
+    background: var(--blue);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.agent-input-row button:hover {
+    opacity: 0.92;
+}
+
+.agent-input-row button:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+
+.agent-status {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.agent-response {
+    margin-top: 10px;
+    padding: 16px;
+    border-radius: 10px;
+    background: #f2f8f7;
+    border-left: 4px solid var(--green);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 14px;
+}
